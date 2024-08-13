@@ -23,6 +23,17 @@ jobs:
       - name: Pull Docker image
         run: |
           docker pull ghcr.io/az400devopstest/caf-v0.19.6:latest
+          
+      - name: Check Docker image size
+        run: |
+          # Get the image ID
+          IMAGE_ID=$(docker images -q ghcr.io/az400devopstest/caf-v0.19.6:latest)
+          # Get the image size in bytes
+          IMAGE_SIZE=$(docker inspect --format='{{.Size}}' $IMAGE_ID)
+          # Convert the size to megabytes
+          IMAGE_SIZE_MB=$(echo "scale=2; $IMAGE_SIZE / 1024 / 1024" | bc)
+          echo "Image size: $IMAGE_SIZE_MB MB"
+   
 
       - name: Build and Run application inside Docker container
         run: |
