@@ -1,1 +1,27 @@
 
+name: Pull and Run Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull Docker image
+        run: |
+          docker pull ghcr.io/az400devopstest/caf-v0.19.6:latest
+
+      - name: Run code inside Docker container
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ghcr.io/az400devopstest/caf-v0.19.6:latest \
+            bash -c "cd /workspace && ./run-your-code.sh"
