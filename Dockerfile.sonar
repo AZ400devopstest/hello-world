@@ -1,0 +1,36 @@
+# Use a base image with the necessary build tools
+FROM ubuntu:22.04
+
+# Install necessary packages including bear, SonarScanner, and build tools
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    bear \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install SonarScanner
+RUN wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip && \
+    unzip sonar-scanner-cli-4.6.2.2472-linux.zip && \
+    mv sonar-scanner-4.6.2.2472-linux /opt/sonar-scanner && \
+    ln -s /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner
+
+# Set environment variables for SonarScanner
+ENV SONAR_SCANNER_HOME /opt/sonar-scanner
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy your project files into the container
+COPY . .
+
+# Run build and SonarCloud analysis
+RUN bear -- make && \
+    sonar-scanner \
+    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+    -Dsonar.organization=${SONAR_ORGANIZATION_KEY} \
+    -Dsonar.host.url=https://sonarcloud.io \
+    -Dsonar.login=${SONAR_TOKEN} \
+    -Dsonar.sources=. \
+    -Dsonar.cfamily.compile-commands=compile_commands.json
