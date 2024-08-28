@@ -30,7 +30,7 @@ jobs:
 
     - name: Run sonar-scanner
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         sonar-scanner \
@@ -44,14 +44,18 @@ jobs:
     - name: Get PR details and Notify the PR author
       if: github.event_name == 'pull_request'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
       run: |
         # Get the PR number and PR author
         PR_NUMBER=$(jq --raw-output .pull_request.number $GITHUB_EVENT_PATH)
         PR_AUTHOR=$(jq --raw-output .pull_request.user.login $GITHUB_EVENT_PATH)
-        
+
+        # Echo PR details
+        echo "PR Number: $PR_NUMBER"
+        echo "PR Author: $PR_AUTHOR"
+
         # Get PR details using GitHub REST API (optional)
-        PR_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+        PR_DETAILS=$(curl -s -H "Authorization: token $GHCR_TOKEN" \
                            -H "Accept: application/vnd.github.v3+json" \
                            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
         echo "PR Details: $PR_DETAILS"
