@@ -41,13 +41,21 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gh
 
-    - name: Notify the PR author
+    - name: Get PR details and Notify the PR author
       if: github.event_name == 'pull_request'
-      run: |
-        # Get the PR author's login
-        PR_AUTHOR=$(jq -r .pull_request.user.login < $GITHUB_EVENT_PATH)
-        # Add a comment to the PR
-        gh pr comment ${{ github.event.pull_request.number }} \
-          --body "Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here](https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }})."
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Get the PR number and PR author
+        PR_NUMBER=$(jq --raw-output .pull_request.number $GITHUB_EVENT_PATH)
+        PR_AUTHOR=$(jq --raw-output .pull_request.user.login $GITHUB_EVENT_PATH)
+        
+        # Get PR details using GitHub REST API (optional)
+        PR_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                           -H "Accept: application/vnd.github.v3+json" \
+                           "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+        echo "PR Details: $PR_DETAILS"
+
+        # Add a comment to the PR
+        gh pr comment $PR_NUMBER \
+          --body "Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here](https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }})."
