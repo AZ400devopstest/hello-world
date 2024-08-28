@@ -27,7 +27,7 @@ jobs:
         distribution: 'temurin'
         
     - name: Install sonar-scanner and build-wrapper
-      uses: sonarsource/sonarcloud-github-action@v1
+      uses: sonarsource/sonarqube-scan-action@master	
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: https://sonarcloud.io
