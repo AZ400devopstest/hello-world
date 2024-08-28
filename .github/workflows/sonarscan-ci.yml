@@ -13,30 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y bear
-          # Install bear for generating compile_commands.json
-
-      - name: Build Project and Generate compile_commands.json
-        run: |
-          bear -- make
-          # This generates compile_commands.json using make
-
-      - name: SonarCloud Analysis
+      - name: Build and Analyze in Docker
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Your SonarCloud token
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION_KEY: ${{ secrets.SONAR_ORGANIZATION_KEY }}
         run: |
+          docker build -f Dockerfile.sonar -t my-analysis-image .
           docker run --rm \
-            -v ${{ github.workspace }}:/usr/src \
-            -w /usr/src \
-            sonarsource/sonar-scanner-cli \
-            sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.sources=. \
-            -Dsonar.cfamily.compile-commands=compile_commands.json
+            -v ${{ github.workspace }}:/usr/src/app \
+            -e SONAR_TOKEN=$SONAR_TOKEN \
+            -e SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY \
+            -e SONAR_ORGANIZATION_KEY=$SONAR_ORGANIZATION_KEY \
+            my-analysis-image
             -X
