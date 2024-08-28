@@ -1,4 +1,4 @@
-name: Main Workflow
+name: Scan code
 
 on:
   push:
@@ -30,18 +30,24 @@ jobs:
 
     - name: Run sonar-scanner
       env:
-        GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: sonar-scanner --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
+      run: |
+        sonar-scanner \
+          -Dsonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json
 
     - name: Install GitHub CLI
       run: |
+        sudo apt-get update
         sudo apt-get install -y gh
 
-    - name: Comment on pull request
+    - name: Notify the PR author
+      if: github.event_name == 'pull_request'
       run: |
-        gh auth login --with-token < ${{ secrets.GHCR_TOKEN }}
-        SONAR_URL="https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }}&pullRequest=${{ github.event.pull_request.number }}"
-        gh pr comment ${{ github.event.pull_request.number }} --body "SonarCloud analysis is complete. You can view the results [here](${SONAR_URL})."
+        # Get the PR author's login
+        PR_AUTHOR=$(jq -r .pull_request.user.login < $GITHUB_EVENT_PATH)
+        # Add a comment to the PR
+        gh pr comment ${{ github.event.pull_request.number }} \
+          --body "Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here](https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }})."
       env:
-        GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
