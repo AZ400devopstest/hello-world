@@ -1,0 +1,30 @@
+name: Analyze Code with SonarCloud, Pull Docker Image, and Build Application
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  analyze_and_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        # This step checks out the repository's code so that it can be analyzed and built.
+
+      - name: SonarCloud Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Your SonarCloud token
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/usr/src \
+            -w /usr/src \
+            sonarsource/sonar-scanner-cli \
+            sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.sources=src
