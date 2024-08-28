@@ -56,4 +56,4 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           /repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
-          -f body="Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here](https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }})."
+          -f body="Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here](https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }}&pullRequest=${PR_NUMBER}")."
