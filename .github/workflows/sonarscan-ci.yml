@@ -24,6 +24,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: '17'
+        distribution: 'adoptopenjdk'
         
     - name: Install sonar-scanner and build-wrapper
       uses: sonarsource/sonarcloud-github-action@v1
