@@ -30,7 +30,7 @@ jobs:
 
     - name: Run sonar-scanner
       env:
-        GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         sonar-scanner \
@@ -44,11 +44,14 @@ jobs:
     - name: Get PR details and Notify the PR author
       if: github.event_name == 'pull_request'
       env:
-        GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Get the PR number and PR author
         PR_NUMBER=$(jq --raw-output .pull_request.number $GITHUB_EVENT_PATH)
         PR_AUTHOR=$(jq --raw-output .pull_request.user.login $GITHUB_EVENT_PATH)
+
+        # Construct the SonarCloud URL for the project issues including PR number
+        SONAR_URL="https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }}&pullRequest=${PR_NUMBER}"
 
         # Use gh CLI to add a comment to the PR
         gh api \
@@ -56,4 +59,4 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           /repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
-          -f body="Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here](https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }}&pullRequest=${PR_NUMBER}")."
+          -f body="Hi @$PR_AUTHOR, the SonarCloud scan is complete. You can review the results [here]($SONAR_URL)."
