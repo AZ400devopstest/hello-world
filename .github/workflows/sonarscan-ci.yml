@@ -1,29 +1,41 @@
-name: Analyze Code with SonarCloud, Pull Docker Image, and Build Application
-
 on:
+  # Trigger analysis when pushing to master or pull requests
   push:
     branches:
       - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+name: Main Workflow
 
 jobs:
-  analyze_and_build:
+  sonarqube:
     runs-on: ubuntu-latest
+    env:
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        # Disabling shallow clone is recommended for improving relevancy of reporting
+        fetch-depth: 0
 
-      - name: Build and Analyze in Docker
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          SONAR_ORGANIZATION_KEY: ${{ secrets.SONAR_ORGANIZATION_KEY }}
-        run: |
-          docker build -f Dockerfile.sonar -t my-analysis-image .
-          docker run --rm \
-            -v ${{ github.workspace }}:/usr/src/app \
-            -e SONAR_TOKEN=$SONAR_TOKEN \
-            -e SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY \
-            -e SONAR_ORGANIZATION_KEY=$SONAR_ORGANIZATION_KEY \
-            my-analysis-image
-            -X
+    - name: Install sonar-scanner and build-wrapper
+      uses: sonarsource/sonarcloud-github-action@v1
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
+
+    - name: Run build-wrapper
+      run: |
+        build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
+
+    - name: Run sonar-scanner
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      run: |
+        sonar-scanner --define sonar.projectKey="${{ secrets.SONAR_PROJECT_KEY }}" \
+                       --define sonar.organization="${{ secrets.SONAR_ORGANIZATION }}" \
+                       --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
