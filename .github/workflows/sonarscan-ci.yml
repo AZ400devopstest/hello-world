@@ -39,3 +39,4 @@ jobs:
             -Dsonar.login=$SONAR_TOKEN \
             -Dsonar.sources=. \
             -Dsonar.cfamily.compile-commands=compile_commands.json
+            -X
