@@ -41,23 +41,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gh
 
-    - name: Authenticate GitHub CLI
-      run: |
-        echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
-
     - name: Get PR details and Notify the PR author
       if: github.event_name == 'pull_request'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Get the PR number and PR author
         PR_NUMBER=$(jq --raw-output .pull_request.number $GITHUB_EVENT_PATH)
         PR_AUTHOR=$(jq --raw-output .pull_request.user.login $GITHUB_EVENT_PATH)
-
-        # Echo PR details
-        echo "PR Number: $PR_NUMBER"
-        echo "PR Author: $PR_AUTHOR"
-
-        # Get PR details using GitHub CLI
-        PR_DETAILS=$(gh pr view $PR_NUMBER --json title,body --jq '.')
+        
+        # Get PR details using GitHub REST API (optional)
+        PR_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                           -H "Accept: application/vnd.github.v3+json" \
+                           "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
         echo "PR Details: $PR_DETAILS"
 
         # Add a comment to the PR
