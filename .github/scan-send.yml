@@ -1,0 +1,44 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Install sonar-scanner and build-wrapper
+      uses: sonarsource/sonarcloud-github-c-cpp@v2
+
+    - name: Run build-wrapper
+      run: |
+        mkdir -p ${{ env.BUILD_WRAPPER_OUT_DIR }}
+        build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
+
+    - name: List build-wrapper output directory
+      run: ls -la ${{ env.BUILD_WRAPPER_OUT_DIR }}
+
+    - name: Run sonar-scanner
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: sonar-scanner --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
+
+    - name: Install GitHub CLI
+      uses: cli/cli@v2
+
+    - name: Comment on pull request
+      run: |
+        gh pr comment ${{ github.event.pull_request.number }} --body "SonarCloud analysis is complete. You can view the results [here](https://sonarcloud.io/dashboard?id=${{ secrets.SONAR_PROJECT_KEY }})."
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
