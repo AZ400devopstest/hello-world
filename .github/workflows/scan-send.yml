@@ -40,8 +40,8 @@ jobs:
 
     - name: Comment on pull request
       run: |
-        gh auth login --with-token < ${{ secrets.GITHUB_TOKEN }}
+        gh auth login --with-token < ${{ secrets.GHCR_TOKEN }}
         SONAR_URL="https://sonarcloud.io/project/issues?id=${{ secrets.SONAR_PROJECT_KEY }}&pullRequest=${{ github.event.pull_request.number }}"
         gh pr comment ${{ github.event.pull_request.number }} --body "SonarCloud analysis is complete. You can view the results [here](${SONAR_URL})."
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
