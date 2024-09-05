@@ -6,3 +6,4 @@ Hello world in C++ with VSCode, MinGW and Make
 Testing 12345
 
 added for login bug issue.
+demo integration
