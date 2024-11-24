@@ -1,0 +1,31 @@
+name: Branch Selection Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Choose the branch to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - main
+
+jobs:
+  branch-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Run Dev Pipeline
+        if: ${{ github.event.inputs.branch == 'dev' }}
+        run: echo "Running pipeline for the DEV branch"
+
+      - name: Run Main Pipeline
+        if: ${{ github.event.inputs.branch == 'main' }}
+        run: echo "Running pipeline for the MAIN branch"
